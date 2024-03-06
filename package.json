@@ -1,11 +1,18 @@
 {
-  "dependencies": {
-    "cheerio": "^1.0.0-rc.12",
-    "crypto-js": "^4.2.0",
-    "install": "^0.13.0",
-    "npm": "^10.4.0"
-  },
-  "devDependencies": {
-    "wrangler": "^3.29.0"
-  }
+    "name": "litestream.pages-api",
+    "version": "0.0.0",
+    "devDependencies": {
+        "wrangler": "^3.30.1"
+    },
+    "private": true,
+    "scripts": {
+        "start": "wrangler dev",
+        "deploy": "wrangler deploy"
+    },
+    "dependencies": {
+        "cheerio": "^1.0.0-rc.12",
+        "crypto-js": "^4.2.0",
+        "install": "^0.13.0",
+        "npm": "^10.2.1"
+    }
 }
