@@ -1,14 +1,15 @@
+
 import {
     generateEncryptAjaxParameters,
     decryptEncryptAjaxResponse,
 } from "./gogo_extractor.js";
 import cheerio from "cheerio";
 
-const BaseURL = "https://gogoanime3.co";
+const BaseURL = "https://anitaku.so/";
 const USER_AGENT =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
 
-async function getSearch(name, page = 1) {
+async function getSearch(name, page = 3) {
     const response = await fetch(
         BaseURL + "/search.html?keyword=" + name + "&page=" + page
     );
@@ -223,7 +224,7 @@ async function GogoDLScrapper(animeid, cookie) {
 
 async function getGogoAuthKey() {
     const response = await fetch(
-        "https://api.github.com/repos/TechShreyash/TechShreyash/contents/gogoCookie.txt",
+        "",
         {
             headers: {
                 "User-Agent":

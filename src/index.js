@@ -1,3 +1,6 @@
+
+
+
 import {
     getSearch,
     getAnime,
@@ -15,6 +18,7 @@ import {
     getAnilistUpcoming,
 } from "./anilist";
 import { SaveError } from "./errorHandler";
+import { increaseViews } from "./statsHandler";
 
 let CACHE = {};
 let HOME_CACHE = {};
@@ -28,28 +32,27 @@ let AT_CACHE = {};
 // For Fixing CORS issue
 // CORS Fix Start
 
-
 const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-}
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, HEAD, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+};
 
 function handleOptions(request) {
     if (
-        request.headers.get('Origin') !== null &&
-        request.headers.get('Access-Control-Request-Method') !== null &&
-        request.headers.get('Access-Control-Request-Headers') !== null
+        request.headers.get("Origin") !== null &&
+        request.headers.get("Access-Control-Request-Method") !== null &&
+        request.headers.get("Access-Control-Request-Headers") !== null
     ) {
         return new Response(null, {
             headers: corsHeaders,
-        })
+        });
     } else {
         return new Response(null, {
             headers: {
-                Allow: 'GET, HEAD, POST, OPTIONS',
+                Allow: "GET, HEAD, POST, OPTIONS",
             },
-        })
+        });
     }
 }
 
@@ -57,18 +60,20 @@ function handleOptions(request) {
 
 export default {
     async fetch(request, env, ctx) {
-        if (request.method === 'OPTIONS') {
+        if (request.method === "OPTIONS") {
             // Handle CORS preflight requests
-            return handleOptions(request)
-        }
-        else if (
-            request.method === 'GET' ||
-            request.method === 'HEAD' ||
-            request.method === 'POST'
+            return handleOptions(request);
+        } else if (
+            request.method === "GET" ||
+            request.method === "HEAD" ||
+            request.method === "POST"
         ) {
             const url = request.url;
 
             if (url.includes("/search/")) {
+                const headers = request.headers;
+                await increaseViews(headers);
+
                 let query, page;
                 try {
                     if (url.includes("?page=")) {
@@ -111,6 +116,9 @@ export default {
                     headers: { "Access-Control-Allow-Origin": "*", Vary: "Origin" },
                 });
             } else if (url.includes("/home")) {
+                const headers = request.headers;
+                await increaseViews(headers);
+
                 if (HOME_CACHE["data"] != null) {
                     const t1 = Math.floor(Date.now() / 1000);
                     const t2 = HOME_CACHE["time"];
@@ -150,6 +158,9 @@ export default {
                     headers: { "Access-Control-Allow-Origin": "*", Vary: "Origin" },
                 });
             } else if (url.includes("/anime/")) {
+                const headers = request.headers;
+                await increaseViews(headers);
+
                 let anime = url.split("/anime/")[1];
 
                 if (ANIME_CACHE[anime] != null) {
@@ -157,7 +168,7 @@ export default {
                     const t2 = ANIME_CACHE[`time_${anime}`];
                     if (t1 - t2 < 60 * 60) {
                         const data = ANIME_CACHE[anime];
-                        data['from_cache'] = true
+                        data["from_cache"] = true;
                         const json = JSON.stringify({
                             results: data,
                         });
@@ -202,6 +213,9 @@ export default {
                     headers: { "Access-Control-Allow-Origin": "*", Vary: "Origin" },
                 });
             } else if (url.includes("/episode/")) {
+                const headers = request.headers;
+                await increaseViews(headers);
+
                 const id = url.split("/episode/")[1];
                 const data = await getEpisode(id);
                 const json = JSON.stringify({ results: data });
@@ -210,6 +224,9 @@ export default {
                     headers: { "Access-Control-Allow-Origin": "*", Vary: "Origin" },
                 });
             } else if (url.includes("/download/")) {
+                const headers = request.headers;
+                await increaseViews(headers);
+
                 const query = url.split("/download/")[1];
                 const timeValue = CACHE["timeValue"];
                 const cookieValue = CACHE["cookieValue"];
@@ -240,6 +257,9 @@ export default {
                     headers: { "Access-Control-Allow-Origin": "*", Vary: "Origin" },
                 });
             } else if (url.includes("/recent/")) {
+                const headers = request.headers;
+                await increaseViews(headers);
+
                 const page = url.split("/recent/")[1];
 
                 if (RECENT_CACHE[page] != null) {
@@ -269,6 +289,9 @@ export default {
                     headers: { "Access-Control-Allow-Origin": "*", Vary: "Origin" },
                 });
             } else if (url.includes("/recommendations/")) {
+                const headers = request.headers;
+                await increaseViews(headers);
+
                 let query = url.split("/recommendations/")[1];
 
                 if (REC_CACHE[query]) {
@@ -278,7 +301,6 @@ export default {
                     return new Response(json, {
                         headers: { "Access-Control-Allow-Origin": "*", Vary: "Origin" },
                     });
-
                 }
 
                 const search = await getAnilistSearch(query);
@@ -297,6 +319,9 @@ export default {
                     headers: { "Access-Control-Allow-Origin": "*", Vary: "Origin" },
                 });
             } else if (url.includes("/gogoPopular/")) {
+                const headers = request.headers;
+                await increaseViews(headers);
+
                 let page = url.split("/gogoPopular/")[1];
 
                 if (GP_CACHE[page] != null) {
@@ -321,6 +346,9 @@ export default {
                     headers: { "Access-Control-Allow-Origin": "*", Vary: "Origin" },
                 });
             } else if (url.includes("/upcoming/")) {
+                const headers = request.headers;
+                await increaseViews(headers);
+
                 let page = url.split("/upcoming/")[1];
 
                 if (AT_CACHE[page] != null) {
@@ -348,7 +376,7 @@ export default {
             }
 
             const text =
-                '<!doctype html><html lang=en><meta charset=UTF-8><meta content="width=device-width,initial-scale=1"name=viewport><title>AnimeDex API</title><style>body{font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;margin:0;padding:0;background-color:#f8f9fa;color:#495057;line-height:1.6}header{background-color:#343a40;color:#fff;text-align:center;padding:1.5em 0;margin-bottom:1em}h1{margin-bottom:.5em;font-size:2em;color:#17a2b8}p{color:#6c757d;margin-bottom:1.5em}code{background-color:#f3f4f7;padding:.2em .4em;border-radius:4px;font-family:"Courier New",Courier,monospace;color:#495057}.container{margin:1em;padding:1em;background-color:#fff;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,.1)}li,ul{list-style:none;padding:0;margin:0}li{margin-bottom:.5em}li code{background-color:#e5e7eb;color:#495057}a{color:#17a2b8;text-decoration:none}a:hover{text-decoration:underline}footer{background-color:#343a40;color:#fff;padding:1em 0;text-align:center}.sample-request{margin-top:1em}.toggle-response{cursor:pointer;color:#17a2b8;text-decoration:underline}.sample-response{display:none;margin-top:1em}pre{background-color:#f3f4f7;padding:1em;border-radius:4px;overflow-x:auto}</style><header><h1>API Dashboard</h1><p>The AnimeDex API provides access to a wide range of anime-related data.<p class=support>For support, visit our <a href=https://telegram.me/TechZBots_Support target=_blank>Telegram Support Channel</a>.</header><div class=container><h2>API Description:</h2><p>The AnimeDex API allows you to access various anime-related data, including search, anime details, episodes, downloads, recent releases, recommendations, popular anime, and upcoming releases. Data is scraped from gogoanime and anilist.</div><div class=container><h2>Routes:</h2><ul><li><code>/home</code> - Get trending anime from Anilist and popular anime from GogoAnime<li><code>/search/{query}</code> - Search for anime by name (query = anime name)<li><code>/anime/{id}</code> - Get details of a specific anime (id = gogoanime anime id)<li><code>/episode/{id}</code> - Get episode stream urls (id = gogoanime episode id)<li><code>/download/{id}</code> - Get episode download urls (id = gogoanime episode id)<li><code>/recent/{page}</code> - Get recent animes from gogoanime (page = 1,2,3...)<li><code>/recommendations/{query}</code> - Get recommendations of anime from anilist (id = anime name)<li><code>/gogoPopular/{page}</code> - Get popular animes from gogoanime (page = 1,2,3...)<li><code>/upcoming/{page}</code> - Get upcoming animes from anilist (page = 1,2,3...)</ul></div><div class=container><h2>Support and Contact:</h2><p>For support and questions, visit our <a href=https://telegram.me/TechZBots_Support target=_blank>Telegram Support Channel </a>.</div><footer><p>© 2024 Anime Dex API. All rights reserved.</footer>';
+                '<!doctype html><html lang=en><meta charset=UTF-8><meta content="width=device-width,initial-scale=1"name=viewport><title>Asta API</title><style>body{font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;margin:0;padding:0;background-color:#f8f9fa;color:#495057;line-height:1.6}header{background-color:#343a40;color:#fff;text-align:center;padding:1.5em 0;margin-bottom:1em}h1{margin-bottom:.5em;font-size:2em;color:#17a2b8}p{color:#6c757d;margin-bottom:1.5em}code{background-color:#f3f4f7;padding:.2em .4em;border-radius:4px;font-family:"Courier New",Courier,monospace;color:#495057}.container{margin:1em;padding:1em;background-color:#fff;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,.1)}li,ul{list-style:none;padding:0;margin:0}li{margin-bottom:.5em}li code{background-color:#e5e7eb;color:#495057}a{color:#17a2b8;text-decoration:none}a:hover{text-decoration:underline}footer{background-color:#343a40;color:#fff;padding:1em 0;text-align:center}.sample-request{margin-top:1em}.toggle-response{cursor:pointer;color:#17a2b8;text-decoration:underline}.sample-response{display:none;margin-top:1em}pre{background-color:#f3f4f7;padding:1em;border-radius:4px;overflow-x:auto}</style><header><h1>API Dashboard</h1><p>The Asta API provides access to a wide range of anime-related data.<p class=support>For support, visit our <a href=https://www.facebook.com/Sudeepbhujel27 target=_blank></a>.</header><div class=container><h2>API Description:</h2><p>The Asta Anime API is a web-based service that allows developers to access and integrate anime-related data into their applications. The API provides endpoints for retrieving information about anime shows, characters, episodes, and more. It may also include features such as searching for anime by genre, popularity, or rating. The data is typically returned in a structured format such as JSON or XML, and developers can use this data to build a wide range of applications, such as anime streaming platforms, fan websites, or mobile apps. Anime API can be a valuable resource for developers looking to create anime-related projects, as it eliminates the need to manually gather and maintain the data themselves..</div><div class=container><h2>Routes:</h2><ul><li><code>/home</code> - Get trending anime from Anilist and popular anime from GogoAnime<li><code>/search/{query}</code> - Search for anime by name (query = anime name)<li><code>/anime/{id}</code> - Get details of a specific anime (id = gogoanime anime id)<li><code>/episode/{id}</code> - Get episode stream urls (id = gogoanime episode id)<li><code>/download/{id}</code> - Get episode download urls (id = gogoanime episode id)<li><code>/recent/{page}</code> - Get recent animes from gogoanime (page = 1,2,3...)<li><code>/recommendations/{query}</code> - Get recommendations of anime from anilist (id = anime name)<li><code>/gogoPopular/{page}</code> - Get popular animes from gogoanime (page = 1,2,3...)<li><code>/upcoming/{page}</code> - Get upcoming animes from anilist (page = 1,2,3...)</ul></div><div class=container><h2>Support and Contact:</h2><p>For support and questions, visit our <a href= https://www.facebook.com/Sudeepbhujel27 target=_blank></a>.</div><footer><p>© 2024 Asta API. All rights reserved.</footer>';
 
             return new Response(text, {
                 headers: {
@@ -357,13 +385,13 @@ export default {
                     Vary: "Origin",
                 },
             });
-        }
-        else {
+        } else {
             return new Response(null, {
                 status: 405,
-                statusText: 'Method Not Allowed',
-            })
-
+                statusText: "Method Not Allowed",
+            });
         }
     },
 };
+
+
